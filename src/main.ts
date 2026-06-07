@@ -1,22 +1,22 @@
-import { invoke } from "@tauri-apps/api/core";
+import { makeSolarSystem } from "./data/planets";
+import { computeAccelerations } from "./core/gravity";
+import { velocityVerletStep } from "./core/integrator";
+import { createScene } from "./ui/scene";
 
-let greetInputEl: HTMLInputElement | null;
-let greetMsgEl: HTMLElement | null;
+const bodies = makeSolarSystem();
+computeAccelerations(bodies);
 
-async function greet() {
-  if (greetMsgEl && greetInputEl) {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    greetMsgEl.textContent = await invoke("greet", {
-      name: greetInputEl.value,
-    });
+const scene = createScene(bodies);
+
+const dt = 1;
+const stepsPerFrame = 2;
+
+function animate() {
+  for (let i = 0; i < stepsPerFrame; i++) {
+    velocityVerletStep(bodies, dt);
   }
+  scene.render();
+  requestAnimationFrame(animate);
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  greetInputEl = document.querySelector("#greet-input");
-  greetMsgEl = document.querySelector("#greet-msg");
-  document.querySelector("#greet-form")?.addEventListener("submit", (e) => {
-    e.preventDefault();
-    greet();
-  });
-});
+animate();
