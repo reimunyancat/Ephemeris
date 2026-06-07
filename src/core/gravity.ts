@@ -17,7 +17,7 @@ export function computeAccelerations(
 
       const dx = b.pos.x - a.pos.x;
       const dy = b.pos.y - a.pos.y;
-      const dz = b.pos.z - b.pos.z;
+      const dz = b.pos.z - a.pos.z;
 
       const dist2 = dx * dx + dy * dy + dz * dz + eps2;
       const invDist = 1 / Math.sqrt(dist2);
