@@ -1,59 +1,76 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { Body } from "../core/body";
-import { ThreeMFLoader } from "three/examples/jsm/Addons.js";
+import { OrbitControls } from "three/examples/jsm/Addons.js";
+import { EffectComposer } from "three/examples/jsm/Addons.js";
+import { RenderPass } from "three/examples/jsm/Addons.js";
+import { UnrealBloomPass } from "three/examples/jsm/Addons.js";
 
-export interface Scene3D {
-  render: () => void;
-  meshes: Map<Body, THREE.Mesh>;
+export interface SceneCtx {
+  renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+  controls: OrbitControls;
+  composer: EffectComposer;
+  render(): void;
 }
 
-export function createScene(bodies: Body[]): Scene3D {
+export function createScene(canvas: HTMLCanvasElement): SceneCtx {
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000008);
+  scene.background = new THREE.Color(0x05060a);
 
   const camera = new THREE.PerspectiveCamera(
-    60,
+    50,
     window.innerWidth / window.innerHeight,
     0.01,
     5000,
   );
   camera.up.set(0, 0, 1);
-  camera.position.set(0, -8, 5);
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, innerHeight);
-  renderer.setPixelRatio(window.devicePixelRatio);
-  document.body.appendChild(renderer.domElement);
+  camera.position.set(0, -18, 12);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 0.3;
+  controls.maxDistance = 800;
 
-  const meshes = new Map<Body, THREE.Mesh>();
-  for (const b of bodies) {
-    const isSun = b.name === "태양";
-    const geometry = new THREE.SphereGeometry(isSun ? 0.3 : 0.08, 24, 24);
-    const material = new THREE.MeshBasicMaterial({
-      color: isSun ? 0xffcc33 : 0x66ccff,
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
-    meshes.set(b, mesh);
-  }
+  const SunLight = new THREE.PointLight(0xffffff, 2.2, 0, 0);
+  scene.add(SunLight);
+  scene.add(new THREE.AmbientLight(0x556070, 0.7));
 
-  window.addEventListener("resize", () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  const bloom = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    0.7, // strength
+    0.6, // radius
+    0.85, // threshold
+  );
+  composer.addPass(bloom);
+
+  function onResize(): void {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-
-  function render() {
-    for (const [body, mesh] of meshes) {
-      mesh.position.set(body.pos.x, body.pos.y, body.pos.z);
-    }
-    controls.update();
-    renderer.render(scene, camera);
+    renderer.setSize(w, h);
+    composer.setSize(w, h);
   }
-  return { render, meshes, scene };
+  window.addEventListener("resize", onResize);
+
+  return {
+    renderer,
+    scene,
+    camera,
+    controls,
+    composer,
+    render() {
+      controls.update();
+      composer.render();
+    },
+  };
 }
