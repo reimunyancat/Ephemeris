@@ -1,8 +1,8 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/Addons.js";
-import { EffectComposer } from "three/examples/jsm/Addons.js";
-import { RenderPass } from "three/examples/jsm/Addons.js";
-import { UnrealBloomPass } from "three/examples/jsm/Addons.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 
 export interface SceneCtx {
   renderer: THREE.WebGLRenderer;
@@ -38,8 +38,8 @@ export function createScene(canvas: HTMLCanvasElement): SceneCtx {
   controls.minDistance = 0.3;
   controls.maxDistance = 800;
 
-  const SunLight = new THREE.PointLight(0xffffff, 2.2, 0, 0);
-  scene.add(SunLight);
+  const sunLight = new THREE.PointLight(0xffffff, 2.2, 0, 0);
+  scene.add(sunLight);
   scene.add(new THREE.AmbientLight(0x556070, 0.7));
 
   const composer = new EffectComposer(renderer);
