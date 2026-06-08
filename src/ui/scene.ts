@@ -6,6 +6,7 @@ import { ThreeMFLoader } from "three/examples/jsm/Addons.js";
 export interface Scene3D {
   render: () => void;
   meshes: Map<Body, THREE.Mesh>;
+  scene: THREE.Scene;
 }
 
 export function createScene(bodies: Body[]): Scene3D {
@@ -54,5 +55,5 @@ export function createScene(bodies: Body[]): Scene3D {
     controls.update();
     renderer.render(scene, camera);
   }
-  return { render, meshes };
+  return { render, meshes, scene };
 }
